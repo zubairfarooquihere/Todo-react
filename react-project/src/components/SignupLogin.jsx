@@ -39,7 +39,7 @@ function SignupLogin() {
       "http://localhost:8080/auth/login",
       formData
     );
-    dispatch(LoginStateActions.logIn({token: res.data.token, expires: res.data.expiresIn, userName: res.data.userName}));
+    dispatch(LoginStateActions.logIn({token: res.data.token, expires: res.data.expiresIn, userName: res.data.userName, userId: res.data.userId}));
   };
 
   const signup = async (e) => {

@@ -17,7 +17,7 @@ import { MdOutlineCancel } from "react-icons/md";
 
 function TodoItem(props) {
   const dispatch = useDispatch();
-  const { TodoListId, TodoListIndex, title, list } = props;
+  const { TodoListId, TodoListIndex, title, list, myTeam } = props;
   const [infoMdl, setInfoMdl] = useState(false);
   const logIN = useSelector((state) => state.LoginStateSlice.logIn);
   const [task, setTask] = useState("");
@@ -35,7 +35,6 @@ function TodoItem(props) {
   const changeStatus = (listId, listIndex) => {
     if (logIN) {
       dispatch(changeStatusAction(listId, TodoListIndex, listIndex, logIN));
-      //items[listIndex].status = items[listIndex].status === 'completed' ? 'active' : 'completed'
     }
   };
 
@@ -66,7 +65,7 @@ function TodoItem(props) {
 
   return (
     <>
-    {infoMdl && <TodoInfo onClose={setInfoMdl} />}
+    {infoMdl && <TodoInfo onClose={setInfoMdl} TodoListIndex={TodoListIndex} TodoListId={TodoListId} myTeam={myTeam} />}
       <div className={classes["todo-app"]}>
         <div className={classes["app-title"]}>
           <h2>{title}</h2>
@@ -129,28 +128,6 @@ function TodoItem(props) {
             </Reorder.Item>
           ))}
         </Reorder.Group>
-        {/* {list.map((item, listIndex) => {
-            return (
-              <li
-                key={item._id}
-                className={item.status === "completed" ? classes.checked : ""}
-                onClick={() => {
-                  changeStatus(item._id, listIndex);
-                }}
-              >
-                {item.text}
-                <span
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    delteItem(item._id, listIndex);
-                  }}
-                >
-                  x
-                </span>
-              </li>
-            );
-          })} */}
-        {/* </ul> */}
       </div>
     </>
   );

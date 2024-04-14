@@ -45,6 +45,11 @@ const TodoListSlice = createSlice({
       newArray.splice(listIndex, 1);
       state.TodoLists[TodoListIndex].list = [...newArray];
     },
+    addTeam(state, action) {
+      const { TodoListIndex, myTeam } = action.payload;
+      console.log(myTeam);
+      state.TodoLists[TodoListIndex].myTeam = [...myTeam];
+    }
   },
 });
 

@@ -9,8 +9,8 @@ const LoginStateSlice = createSlice({
   },
   reducers: {
     logIn(state, action) {
-      const { token, expires, userName } = action.payload;
-      const cookieValue = JSON.stringify({ token, userName });
+      const { token, expires, userName, userId } = action.payload;
+      const cookieValue = JSON.stringify({ token, userName, userId });
       Cookies.set("token", cookieValue, { expires: expires / 24, secure: true, sameSite: "Strict" }); // Setting SameSite to Strict
       state.logIn = Cookies.get("token");
     },
