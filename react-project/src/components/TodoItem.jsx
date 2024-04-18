@@ -17,7 +17,7 @@ import { MdOutlineCancel } from "react-icons/md";
 
 function TodoItem(props) {
   const dispatch = useDispatch();
-  const { TodoListId, TodoListIndex, title, list, myTeam } = props;
+  const { TodoListId, TodoListIndex, title, list, myTeam, userId } = props;
   const [infoMdl, setInfoMdl] = useState(false);
   const logIN = useSelector((state) => state.LoginStateSlice.logIn);
   const [task, setTask] = useState("");
@@ -65,7 +65,7 @@ function TodoItem(props) {
 
   return (
     <>
-    {infoMdl && <TodoInfo onClose={setInfoMdl} TodoListIndex={TodoListIndex} TodoListId={TodoListId} myTeam={myTeam} />}
+    {infoMdl && <TodoInfo onClose={setInfoMdl} TodoListIndex={TodoListIndex} TodoListId={TodoListId} myTeam={myTeam} userId={userId} />}
       <div className={classes["todo-app"]}>
         <div className={classes["app-title"]}>
           <h2>{title}</h2>

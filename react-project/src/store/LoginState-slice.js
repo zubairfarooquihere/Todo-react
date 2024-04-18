@@ -11,8 +11,9 @@ const LoginStateSlice = createSlice({
     logIn(state, action) {
       const { token, expires, userName, userId } = action.payload;
       const cookieValue = JSON.stringify({ token, userName, userId });
-      Cookies.set("token", cookieValue, { expires: expires / 24, secure: true, sameSite: "Strict" }); // Setting SameSite to Strict
+      Cookies.set("token", cookieValue, { expires: expires / 24, secure: true, sameSite: "Strict" }); // 1 day / 24 hours.
       state.logIn = Cookies.get("token");
+      //setTokenInLocalStorage(Cookies.get("token"), expires);
     },
     logOut(state) {
       Cookies.remove("token", { sameSite: "Strict" }); // Setting SameSite to Strict

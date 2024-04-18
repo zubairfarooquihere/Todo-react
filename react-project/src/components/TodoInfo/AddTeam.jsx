@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import classes from "./AddTeam.module.scss";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { gql, useQuery, useMutation } from "@apollo/client";
 import { TodoListActions } from "../../store/TodoLists-slice";
 
 import Modal from "../ui/Modal/Modal";
 
 const getUsers = gql`
-  query ($email: String!) {
-    findUser(email: $email) {
+  query ($email: String!, $userId: String!) {
+    findUser(email: $email, userId: $userId) {
       _id
       email
       name
@@ -17,43 +17,48 @@ const getUsers = gql`
 `;
 
 const addUserToTodoGQL = gql`
-  mutation($emails: [String!]!, $todoId: String!) {
-    addUserToTodo(emails: $emails, todoId: $todoId) {
-      _id readAndWrite readOnly user {
-        _id email name
-      }
+  mutation($currentTeam: [inputTeam]!, $newTeam: [inputTeam]!, $todoId: String!, $userId: String!) {
+    addUserToTodo(currentTeam: $currentTeam, newTeam: $newTeam, todoId: $todoId, userId: $userId) {
+      _id
     }
   }
 `;
 
 const deleteUserToTodoGQL = gql`
-  mutation($email: String!, $todoId: String!) {
-    deleteUserToTodo(email: $email, todoId: $todoId) {
+  mutation ($email: String!, $todoId: String!, $userId: String!) {
+    deleteUserToTodo(email: $email, todoId: $todoId, userId: $userId) {
       user {
-        _id email name
+        _id
+        email
+        name
       }
-      _id readAndWrite readOnly
+      _id
+      readAndWrite
+      readOnly
     }
   }
 `;
 
 function AddTeam(props) {
-  const { onClose, TodoListIndex, TodoListId, myTeam } = props;
+  const { onClose, TodoListIndex, TodoListId, myTeams, userId } = props;
   const dispatch = useDispatch();
+  const logIN = useSelector((state) => state.LoginStateSlice.logIn);
   const [searchValue, setSearchValue] = useState("");
   const [newTeam, setNewTeam] = useState([]);
-
+  const [myTeam, setMyTeam] = useState([...myTeams]);
   // Use useQuery hook to fetch data
   const { loading, error, data } = useQuery(getUsers, {
     skip: !searchValue, // Skip the query if searchValue is falsy
-    variables: { email: searchValue },
+    variables: { email: searchValue, userId: userId },
   });
-  const [addUserToTodo, { loading2, error2 }] = useMutation(addUserToTodoGQL);
-  const [deleteUserToTodo, { deleteLoading, deleteError }] = useMutation(deleteUserToTodoGQL);
+  const [addUserToTodo, { loading: loading2, error: error2 }] =
+    useMutation(addUserToTodoGQL);
+  const [deleteUserToTodo, { loading: deleteLoading, error: deleteError }] =
+    useMutation(deleteUserToTodoGQL);
 
   // Log data and errors
-  if (error) {
-    console.error("Error fetching data:", error);
+  if (error2) {
+    console.error("Error fetching data:", error2);
   }
 
   const handleInputChange = (event) => {
@@ -61,48 +66,68 @@ function AddTeam(props) {
   };
 
   const addInTeam = (user) => {
-    const { email } = user
+    const { __typename ,...userv2 } = user;
     setNewTeam((prev) => {
-      return [...prev, user];
+      return [...prev, {
+        _id: user._id,
+        readAndWrite: true,
+        readOnly: false,
+        user: userv2,
+      }];
     });
   };
 
   function isUserInTeam(user) {
     const res = myTeam.some((teamMember) => teamMember.user._id === user._id);
     const res2 = newTeam.some((teamMember) => teamMember._id === user._id);
-    if(res || res2) {
+    if (res || res2) {
       return true;
     }
     return false;
   }
-
   const save = () => {
-    const teamEmail = newTeam.map((team) => {return team.email})
-    console.log(teamEmail);
-    addUserToTodo({ variables: { emails: teamEmail, todoId: TodoListId } })
-      .then(response => {
-        console.log('response response');
-        console.log(response);
-        dispatch(TodoListActions.addTeam({TodoListIndex, myTeam: [...response.data.addUserToTodo]}));
+      addUserToTodo({
+        variables: {
+          currentTeam: myTeam,
+          newTeam: newTeam,
+          todoId: TodoListId,
+          userId: JSON.parse(logIN).userId,
+        },
       })
-      .catch(error => {
-        console.error('Failed to add user to todo:', error);
-      });
-    onClose();
+        .then((response) => {
+          console.log(response);
+          dispatch(
+            TodoListActions.addTeam({
+              TodoListIndex,
+              myTeam: [...myTeam, ...newTeam],
+            })
+          );
+        })
+        .catch((error) => {
+          console.error("Failed to add user to todo:", error);
+        });
   };
 
   const deleteMyTeam = (email) => {
-    deleteUserToTodo({ variables: { email, todoId: TodoListId } })
-      .then(response => {
-        console.log('response response');
-        console.log(response);
-        dispatch(TodoListActions.addTeam({TodoListIndex, myTeam: [...response.data.deleteUserToTodo]}));
+    deleteUserToTodo({
+      variables: {
+        email,
+        todoId: TodoListId,
+        userId: JSON.parse(logIN).userId,
+      },
+    })
+      .then((response) => {
+        dispatch(
+          TodoListActions.addTeam({
+            TodoListIndex,
+            myTeam: [...response.data.deleteUserToTodo],
+          })
+        );
       })
-      .catch(error => {
-        console.error('Failed to add user to todo:', error);
+      .catch((error) => {
+        console.error("Failed to add user to todo:", error);
       });
-  }
- 
+  };
   return (
     <>
       <Modal onClose={onClose} />
@@ -142,7 +167,87 @@ function AddTeam(props) {
           )}
           <button type="submit">Search</button>
         </div>
-        <div className={classes.team}>
+        <div className={classes.table}>
+          <div className={`${classes.row}`}>
+            <div className={`${classes.cell}`}>Email</div>
+            <div className={`${classes.cell}`}>
+              {/* <input type="radio" name="option" id="option1" /> */}
+              <label htmlFor="option1">Read and write</label>
+            </div>
+            <div className={`${classes.cell}`}>
+              {/* <input type="radio" name="option" id="option2" /> */}
+              <label htmlFor="option2">Read only</label>
+            </div>
+            <div className={`${classes.cell}`}>Delete</div>
+          </div>
+          {myTeam.map((team, index) => {
+            return (
+              <div key={team._id} className={`${classes.row}`}>
+                <div className={`${classes.cell}`}>{team.user.email}</div>
+                <div className={`${classes.cell}`}>
+                  <label hidden={true} htmlFor={`${team.user._id}-readWrite`}>
+                    Read & Write
+                  </label>
+                  <input
+                    defaultChecked={Boolean(team.readAndWrite)}
+                    onChange={(event) => setMyTeam(prev => prev.map((item, i) => i === index ? { ...item, readAndWrite: true, readOnly: false } : item))}
+                    type="radio"
+                    name={`${team.user._id}-options`}
+                    id={`${team.user._id}-readWrite`}
+                  />
+                </div>
+                <div className={`${classes.cell}`}>
+                  <label hidden={true} htmlFor={`${team.user._id}-readOnly`}>Read Only</label>
+                  <input
+                    defaultChecked={Boolean(team.readOnly)}
+                    onChange={(event) => setMyTeam(prev => prev.map((item, i) => i === index ? { ...item, readOnly: true, readAndWrite: false } : item))}
+                    type="radio"
+                    name={`${team.user._id}-options`}
+                    id={`${team.user._id}-readOnly`}
+                  />
+                </div>
+                <div className={`${classes.cell}`}>
+                  <div onClick={()=>{deleteMyTeam(team.user.email)}} style={{cursor: 'pointer'}}>X</div>
+                </div>
+              </div>
+            );
+          })}
+
+          {newTeam.map((team, index) => {
+            return (
+              <div key={team._id} className={`${classes.row}`}>
+                <div className={`${classes.cell}`}>{team.user.email}</div>
+                <div className={`${classes.cell}`}>
+                  <label hidden={true} htmlFor={`${team.user._id}-readWrite`}>
+                    Read & Write
+                  </label>
+                  <input
+                    defaultChecked={Boolean(team.readAndWrite)}
+                    onChange={(event) => setNewTeam(prev => prev.map((item, i) => i === index ? { ...item, readAndWrite: true, readOnly: false } : item))}
+                    type="radio"
+                    name={`${team.user._id}-options`}
+                    id={`${team.user._id}-readWrite`}
+                  />
+                </div>
+                <div className={`${classes.cell}`}>
+                  <label hidden={true} htmlFor={`${team.user._id}-readOnly`}>Read Only</label>
+                  <input
+                    defaultChecked={Boolean(team.readOnly)}
+                    onChange={(event) => setNewTeam(prev => prev.map((item, i) => i === index ? { ...item, readOnly: true, readAndWrite: false } : item))}
+                    type="radio"
+                    name={`${team.user._id}-options`}
+                    id={`${team.user._id}-readOnly`}
+                  />
+                </div>
+                <div className={`${classes.cell}`}>
+                  <div style={{cursor: 'pointer'}}>X</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* <div className={classes.team}>
           <div className={classes.team__header}>My Team</div>
           <ul className={classes.team__persons}>
             {myTeam.map((team) => {
@@ -172,7 +277,7 @@ function AddTeam(props) {
               );
             })}
           </ul>
-        </div>
+        </div> */}
         <div className={classes.button}>
           <div
             onClick={() => {

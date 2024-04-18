@@ -104,9 +104,40 @@
   }
 
   &__second {
+    position: relative;
+    overflow: hidden;
+    overflow-y: scroll;
     height: 100%;
     width: 49%;
     border: 1px solid black;
-    //background-color: palegreen;
+    background-color: palegreen;
+    padding: 0 10px
+  }
+}
+
+.commentBox {
+  position: absolute;
+  width: 90%;
+  bottom: 0;
+  border: 1px solid black;
+  border-radius: 30px;
+}
+
+.comments {
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+
+  &__comment {
+    max-width: 170px;
+    margin-top: 13px;
+    &--me {
+      align-self: flex-end;
+    }
+
+    &--sender {
+      align-self: flex-start;
+    }
   }
 }

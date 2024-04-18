@@ -111,3 +111,35 @@
     background-color: greenyellow;
   }
 }
+
+
+.table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 600px; /* Adjust as needed */
+  margin: 0 auto; /* Center the table */
+  margin-top: 20px;
+}
+
+.row {
+  display: flex;
+  border-bottom: 1px solid #ccc;
+}
+
+.cell {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  border-right: 1px solid #ccc;
+}
+
+.cell:last-child {
+  border-right: none; /* Remove right border for last cell */
+}
+
+input[type="radio"] {
+  margin-right: 5px;
+}

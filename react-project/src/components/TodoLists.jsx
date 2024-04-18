@@ -27,7 +27,7 @@ function TodoLists() {
       </div>
       <div className={classes.layout}>
         {todoListArr.map((TodoList, index) => {
-          console.log(TodoList);
+          //console.log(TodoList);
           return (
             <TodoItem
               key={TodoList._id}
@@ -36,6 +36,7 @@ function TodoLists() {
               title={TodoList.title}
               list={TodoList.list}
               myTeam={TodoList.myTeam}
+              userId={TodoList.userId}
             />
           );
         })}

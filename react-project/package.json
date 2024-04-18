@@ -12,6 +12,7 @@
   "dependencies": {
     "@apollo/client": "^3.9.10",
     "@reduxjs/toolkit": "^2.2.1",
+    "apollo-link-context": "^1.0.20",
     "axios": "^1.6.7",
     "framer-motion": "^11.0.25",
     "graphql": "^16.8.1",
