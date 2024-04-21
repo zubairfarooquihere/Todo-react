@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import classes from "./TodoItem.module.scss";
 
 import TodoInfo from "./TodoInfo/TodoInfo";
@@ -9,11 +9,15 @@ import {
   deleteListAction,
   changeStatusAction,
   reorderListAction,
+  socketAddList
 } from "../store/TodoLists-actions";
 import { Reorder } from "framer-motion";
 
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { MdOutlineCancel } from "react-icons/md";
+
+import io from "socket.io-client"
+// const socket = io.connect("http://localhost:8080");
 
 function TodoItem(props) {
   const dispatch = useDispatch();
@@ -21,6 +25,24 @@ function TodoItem(props) {
   const [infoMdl, setInfoMdl] = useState(false);
   const logIN = useSelector((state) => state.LoginStateSlice.logIn);
   const [task, setTask] = useState("");
+
+  useEffect(()=>{
+    const socket = io.connect("http://localhost:8080");
+    if(logIN){
+      socket.on(`list_update_${TodoListId}`, (updatedItem) => {
+        const { list } = updatedItem;
+        if(updatedItem.userId !== JSON.parse(logIN).userId){
+          console.log(list);
+          dispatch(socketAddList(list, TodoListIndex));
+        }
+      });
+
+    }
+    return () => {
+      // Close the socket connection
+      socket.disconnect();
+    };
+  },[])
 
   const handleInputChange = (event) => {
     setTask(event.target.value);
@@ -73,6 +95,7 @@ function TodoItem(props) {
             <div onClick={()=>{setInfoMdl(true)}}>
               <IoInformationCircleOutline />
             </div>
+            {/* <div className={classes['iconBtn--cancel']} onClick={delteTodoList}> */}
             <div className={classes['iconBtn--cancel']} onClick={delteTodoList}>
               <MdOutlineCancel />
             </div>

@@ -12,17 +12,21 @@ import {
   ApolloProvider,
   createHttpLink,
 } from "@apollo/client";
+import Cookies from "js-cookie";
 import { setContext } from "@apollo/client/link/context";
 import { LoginStateActions } from "./store/LoginState-slice";
 import { useDispatch } from "react-redux";
+import io from "socket.io-client"
+//const socket = io.connect("http://localhost:8080")
 
 function App() {
   const dispatch = useDispatch();
   const logIN = useSelector((state) => state.LoginStateSlice.logIn);
-  
+
+
   const authLink = setContext((_, { headers }) => {
-    //if (Cookies.get("token")) {
-      //console.log(JSON.parse(logIN).token);
+    //sendMessage();
+    if (Cookies.get("token")) {
       let token = JSON.parse(logIN).token;
       return {
         headers: {
@@ -30,9 +34,9 @@ function App() {
           authorization: token ? `Bearer ${token}` : "",
         },
       };
-    // } else {
-    //   dispatch(LoginStateActions.logOut());
-    // }
+    } else {
+      dispatch(LoginStateActions.logOut());
+    }
   });
 
   const httpLink = createHttpLink({

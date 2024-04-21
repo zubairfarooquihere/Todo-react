@@ -111,7 +111,7 @@ export const addList = (task, TodoListId, TodoListIndex, logIN) => {
         const axiosConfig = config(logIN);
         const res = await axios.post(
           `http://localhost:8080/todo/createList/${TodoListId}`,
-          { text: task },
+          { text: task, userId: JSON.parse(logIN).userId },
           axiosConfig
         );
         const list = res.data.list;
@@ -169,6 +169,13 @@ export const reorderListAction = (newItems, TodoListIndex, TodoListId, logIN) =>
       console.error("Error fetching todo lists:", error);
       throw error;
     }
+  };
+};
+
+export const socketAddList = (list, TodoListIndex) => {
+  return async (dispatch) => {
+    list["TodoListIndex"] = TodoListIndex;
+    dispatch(TodoListActions.addlist(list));
   };
 };
 

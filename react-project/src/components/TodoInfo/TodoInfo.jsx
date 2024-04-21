@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import classes from "./TodoInfo.module.scss";
 import Modal from "../ui/Modal/Modal";
 import AddTeam from "./AddTeam";
-import { gql, useQuery } from "@apollo/client";
+import { gql, useQuery, useMutation } from "@apollo/client";
 import { MdOutlineCancel } from "react-icons/md";
 import { FaUserPlus } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
@@ -19,26 +19,33 @@ const getMemberInfo = gql`
 `;
 
 const getComments = gql`
-  query($todoId: String!) {
+  query ($todoId: String!) {
     getComments(todoId: $todoId) {
-      _id comment userId
+      _id
+      comment
+      userId {
+        email
+        name
+        _id
+      }
     }
   }
 `;
 
 const addComment = gql`
-  mutation($todoId: String!, $comment: String!, $userId: String!) {
+  mutation ($todoId: String!, $comment: String!, $userId: String!) {
     addComment(todoId: $todoId, comment: $comment, userId: $userId) {
-      _id comment userId
+      _id
+      comment
     }
   }
-`
+`;
 
 const deleteComment = gql`
-  mutation($commentId: String!, $todoId: String!) {
+  mutation ($commentId: String!, $todoId: String!) {
     deleteComment(commentId: $commentId, todoId: $todoId)
   }
-`
+`;
 
 function TodoInfo(props) {
   const dispatch = useDispatch();
@@ -48,19 +55,40 @@ function TodoInfo(props) {
   const { loading, error, data } = useQuery(getMemberInfo, {
     variables: { todoId: TodoListId, userId: JSON.parse(logIN).userId },
   });
-  const { loading: l1, error: e1, data: cmt } = useQuery(getComments, {
+  const {
+    loading: l1,
+    error: e1,
+    data: cmt,
+  } = useQuery(getComments, {
     variables: { todoId: TodoListId },
   });
-  const [message, setMessage] = useState('');
+  const [addCommentMutation, { loading: loading2, error: error2 }] =
+    useMutation(addComment);
+  const [message, setMessage] = useState("");
 
   if (error) {
     console.log("Error fetching Member Info: " + error);
   }
 
   const handleKeyDown = (event) => {
-    if (event.key === 'Enter' && message.trim().length !== 0) {
+    if (event.key === "Enter" && message.trim().length !== 0) {
+      addCommentMutation({
+        variables: {
+          todoId: TodoListId,
+          comment: message,
+          userId: JSON.parse(logIN).userId,
+        },
+        refetchQueries: [
+          {
+            query: getComments,
+            variables: {
+              todoId: TodoListId, // Add the necessary variables here
+            },
+          },
+        ],
+      });
       console.log(message); // This will print the message to the console
-      setMessage(''); // Clear the input field after pressing Enter
+      setMessage(""); // Clear the input field after pressing Enter
     }
   };
   //console.log(cmt);
@@ -133,21 +161,38 @@ function TodoInfo(props) {
             </div>
           </div>
           <div className={classes.details__second}>
-          <input
-            className={classes.commentBox}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type your message here..."
-          />
+            <input
+              className={classes.commentBox}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type your message here..."
+            />
             <div className={`${classes.comments}`}>
-              {cmt && cmt.getComments.map((commentObj) =>{
-                if(commentObj.userId === JSON.parse(logIN).userId) {
-                  return (<div key={commentObj._id} className={`${classes.comments__comment} ${classes['comments__comment--me']}`}>{commentObj.comment}</div>)
-                }else {
-                  return (<div key={commentObj._id} className={`${classes.comments__comment} ${classes['comments__comment--sender']}`}>{commentObj.comment}</div>);
-                }
-              })}
+              {cmt &&
+                cmt.getComments.map((commentObj) => {
+                  console.log(commentObj);
+                  console.log(JSON.parse(logIN).userId);
+                  if (commentObj.userId._id === JSON.parse(logIN).userId) {
+                    return (
+                      <div
+                        key={commentObj._id}
+                        className={`${classes.comments__comment} ${classes["comments__comment--me"]}`}
+                      >
+                        {commentObj.comment}
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div
+                        key={commentObj._id}
+                        className={`${classes.comments__comment} ${classes["comments__comment--sender"]}`}
+                      >
+                        {commentObj.userId.name}: {commentObj.comment}
+                      </div>
+                    );
+                  }
+                })}
               {/* <div className={`${classes.comments__comment} ${classes['comments__comment--me']}`}>Sender is Me</div>
               <div className={`${classes.comments__comment} ${classes['comments__comment--sender']}`}>Sender is Other</div> */}
             </div>
